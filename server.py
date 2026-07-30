@@ -19,6 +19,7 @@ from typing import Optional
 import httpx
 import uvicorn
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 _API_BASE_URL = os.environ.get("SIMPLER_GRANTS_API_BASE_URL", "https://api.simpler.grants.gov")
 _API_KEY = os.environ["SIMPLER_GRANTS_API_KEY"]
@@ -84,6 +85,14 @@ Eligible applicant types matter: if every entry in `applicant_types` is a
 government body (state/county/city/tribal) with no nonprofit/501(c)(3)
 code, the money is a pass-through - it reaches nonprofits only through a
 state or local administering agency, not this posting directly.""",
+    # Without this, FastMCP auto-enables DNS-rebinding protection that only
+    # allow-lists localhost/127.0.0.1 as the Host header - correct for an
+    # MCP server a browser might reach on your own machine, but wrong here:
+    # this server is reached over HTTPS by Claude directly, not by a
+    # browser that could be tricked via DNS rebinding, and it's meant to be
+    # deployable under any hostname (Render, Railway, Fly, etc.), not one
+    # hardcoded domain.
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
 )
 
 
